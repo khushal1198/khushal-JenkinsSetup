@@ -108,6 +108,60 @@ kubectl get --namespace jenkins -o jsonpath="{.spec.ports[0].nodePort}" services
 
 ---
 
+## 13. Useful Commands
+
+### Check Jenkins Status
+```bash
+# Check pod status
+kubectl get pods -n jenkins
+
+# Check Jenkins logs
+kubectl logs -n jenkins jenkins-0 -c jenkins
+
+# Check Jenkins service
+kubectl get svc -n jenkins
+```
+
+### Get Jenkins Access Information
+```bash
+# Get admin password
+kubectl exec --namespace jenkins -it svc/jenkins -c jenkins -- /bin/cat /run/secrets/additional/chart-admin-password
+
+# Get Jenkins URL
+export NODE_PORT=$(kubectl get --namespace jenkins -o jsonpath="{.spec.ports[0].nodePort}" services jenkins)
+export NODE_IP=$(kubectl get nodes --namespace jenkins -o jsonpath="{.items[0].status.addresses[0].address}")
+echo http://$NODE_IP:$NODE_PORT
+```
+
+### Manage Jenkins Installation
+```bash
+# Upgrade Jenkins
+helm upgrade jenkins jenkins/jenkins -f jenkins-values.yaml -n jenkins
+
+# Uninstall Jenkins
+helm uninstall jenkins -n jenkins
+
+# Delete PVC (if needed)
+kubectl delete pvc -n jenkins jenkins
+
+# Force delete namespace (if needed)
+kubectl delete namespace jenkins --force --grace-period=0
+```
+
+### Troubleshooting
+```bash
+# Check pod events
+kubectl describe pod -n jenkins jenkins-0
+
+# Check init container logs
+kubectl logs -n jenkins jenkins-0 -c init
+
+# Check plugin installation status
+kubectl logs -n jenkins jenkins-0 -c jenkins | grep "Installing plugin"
+```
+
+---
+
 ## References
 - [Jenkins Helm Chart](https://github.com/jenkinsci/helm-charts)
 - [Jenkins Plugin Manager](https://github.com/jenkinsci/plugin-installation-manager-tool)
